@@ -10,9 +10,32 @@ def TimeStamp():
     currentTime = datetime.datetime.now()
     return currentTime
 
-# TODO: Generate a new employee ID
+# TODO: Generate a new employee ID [THIS IS NOW INDEPENDENT]
 def GenEmployeeID():
     return '001'
+
+
+# Adding Employees to the Employee Table
+
+# def Authentication():
+
+def AddEmployee(Admin_Access='False'):
+        EmployeeID = GenEmployeeID()
+        Name = input('Enter name of Employee: ')
+        DOB = input('Enter Date of Birth of Employee(yyyy-mm-dd): ')
+        EmailID = input('Enter Email ID of Employee: ').lower()
+        PhoneNo = input('Enter Phone Number of Employee: ')
+        Designation = input('Enter Employee Job Title: ')
+        MartialStatus = input('Enter Marital Status of Employee: ')
+        Children = int(input('Enter no. of children of Employee: '))
+        Salary = int(input('Enter Salary of Employee: '))
+        Qualification = input('Enter Qualification of Employee: ')
+        Password = input('Create a password: ')
+
+        cur.execute("INSERT into employees values('{}','{}','{}','{}',{},'{}','{}','{}','{}',{},'{}','{}','{}')".format(EmployeeID,Name,Designation,Admin_Access,Salary,EmailID,PhoneNo,DOB,MartialStatus,Children,Qualification,'Employed',Password))
+        cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'New Employee Registered',TimeStamp()))
+        con.commit()
+
 
 
 #First Run Esstentials
@@ -20,38 +43,36 @@ def setup():
     # company_name = input('Enter Company Name: ')
     cur.execute('CREATE database if not exists emp')
     cur.execute('USE EMP')
-    cur.execute('CREATE table if not exists employees(EmployeeID varchar(10),Name varchar(30),Job_Title varchar(30),Salary int,EmailID varchar(50),Phone_Number varchar(17),Date_OF_Birth date,Marital_Status varchar(10),Children int,Qualifications varchar(20),Employment_Status varchar(15),Password varchar(30))')
+    #Creating a table to store employee Information
+    cur.execute('CREATE table if not exists employees(EmployeeID varchar(10),Name varchar(30),Job_Title varchar(30),Admin_Access varchar(5),Salary int,EmailID varchar(50),Phone_Number varchar(17),Date_OF_Birth date,Marital_Status varchar(10),Children int,Qualifications varchar(20),Employment_Status varchar(15),Password varchar(30))')
+    #Creating table to log all events 
     cur.execute('CREATE table if not exists logs(EmployeeID varchar(10),Name varchar(30),Action varchar(50),TimeStamp varchar(30))')
+    #Creating a table to store requests from employees
+    cur.execute('CREATE table if not exists requests(EmployeeID varchar(10),Name varchar(30),Requests varchar(300),Status varchar(30),TimeStamp varchar(30))')
 
-    cur.execute('SELECT * FROM EMPLOYEES')
-    data = cur.fetchone()
+    cur.execute('SELECT Admin_Access FROM EMPLOYEES')
+    data = cur.fetchall()
+
+    #Checking if an Admin Exists
     try:
-        if data[0] == '001':
-            return
+        for i in data:
+            for j in i:
+                if j == 'True':
+                    return
     except:
-        Adm_EID = '001'
-        Adm_name = input('Enter name of Admin: ')
-        Adm_dob = input('Enter Date of Birth of Admin(yyyy-mm-dd): ')
-        Adm_emailID = input('Enter Email ID of Admin: ').lower()
-        Adm_phoneNo = input('Enter Phone Number of Admin: ')
-        Adm_Title = input('Enter Admin Job Title: ')
-        Adm_martialStatus = input('Enter Marital Status of Admin: ')
-        Adm_Children = int(input('Enter no. of children of Admin: '))
-        Adm_Salary = int(input('Enter Salary of Admin: '))
-        Adm_Qualification = input('Enter Qualification of Admin: ')
-        Adm_password = input('Create a password: ')
-
-        cur.execute("INSERT into employees values('{}','{}','{}',{},'{}','{}','{}','{}',{},'{}','{}','{}')".format(Adm_EID,Adm_name,Adm_Title,Adm_Salary,Adm_emailID,Adm_phoneNo,Adm_dob,Adm_martialStatus,Adm_Children,Adm_Qualification,'Employed',Adm_password))
-        cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(Adm_EID,Adm_name,'EMP Setup Complete',TimeStamp()))
-        con.commit()
+        #Creating an account for Admin if it does not exist
+        print('ADMIN ACCOUNT CREATION:')
+        AddEmployee('True')
         print('Admin Registered!')
 
 setup()
 
-print('WELCOME TO EMP')
+# FIXME: Need to apply the new Admin_Access update below---------------------------------------------------------------------------
+
+print('\nWELCOME TO Employee Management System!')
 
 while True:
-    menu = input('\n1.Login\n2.Exit\nOption: ')
+    menu = input('1.Login\n2.Exit\nOption: ')
 
     if menu == '1':
 
@@ -63,37 +84,37 @@ while True:
         data = cur.fetchone()
         for i in data:
             EmployeeID = data[0]
-            EmployeeName = data[1]
+            Name = data[1]
             title = data[2]
 
 
-        #Admin Controls
+        #Admin's Tools
         if EmployeeID == '001':
-            print('\nWelcome',EmployeeName,'!')
-            cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,EmployeeName,'[Admin] Logged in',TimeStamp()))
+            print('\nWelcome',Name,'!')
+            cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'[Admin] Logged in',TimeStamp()))
+            con.commit()
+
+            while True:
+                menu1 = input('\n1.Add Employee\n2.Remove Employee\n3.Update Employee Details\n4.Employee Requests\n5.Employee Complaints\n6.Log Out\nOption: ')
+                if menu1 == '1':
+                    AddEmployee()
+
+                elif menu1 == '6':
+                    break
+
+
+
+
+        #Employee's Tools
+        else:
+            print('\nWelcome',Name,'!')
+            cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'Logged in',TimeStamp()))
             con.commit()
 
             while True:
                 menu1 = input('\n1.Requests\n2.Log Out\nOption: ')
                 if menu1 == '2':
                     break
-
-
-
-        #Employee Controls
-        elif EmployeeID != '001':
-            print('\nWelcome',EmployeeName,'!')
-            cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,EmployeeName,'Logged in',TimeStamp()))
-            con.commit()
-
-            while True:
-                menu1 = input('\n1.Requests\n2.Log Out\nOption: ')
-                if menu1 == '2':
-                    break
-
-
-
-
 
 
     elif menu == '2':
