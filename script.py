@@ -14,11 +14,10 @@ def TimeStamp():
 def GenEmployeeID():
     return '001'
 
+#TODO: def Authentication():
+
 
 # Adding Employees to the Employee Table
-
-# def Authentication():
-
 def AddEmployee(Admin_Access='False'):
         EmployeeID = GenEmployeeID()
         Name = input('Enter name of Employee: ')
@@ -35,8 +34,6 @@ def AddEmployee(Admin_Access='False'):
         cur.execute("INSERT into employees values('{}','{}','{}','{}',{},'{}','{}','{}','{}',{},'{}','{}','{}')".format(EmployeeID,Name,Designation,Admin_Access,Salary,EmailID,PhoneNo,DOB,MartialStatus,Children,Qualification,'Employed',Password))
         cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'New Employee Registered',TimeStamp()))
         con.commit()
-
-
 
 #First Run Esstentials
 def setup():
@@ -67,12 +64,10 @@ def setup():
 
 setup()
 
-# FIXME: Need to apply the new Admin_Access update below---------------------------------------------------------------------------
-
 print('\nWELCOME TO Employee Management System!')
 
 while True:
-    menu = input('1.Login\n2.Exit\nOption: ')
+    menu = input('\n1.Login\n2.Exit\nOption: ')
 
     if menu == '1':
 
@@ -80,29 +75,30 @@ while True:
         EmailID = input('Enter Email ID: ').lower()
         Password = input('Enter Password: ')
 
-        cur.execute("SELECT EmployeeID,Name,Job_Title from employees where EmailID='{}' and password='{}'".format(EmailID,Password))
+        cur.execute("SELECT EmployeeID,Name,Job_Title,Admin_Access from employees where EmailID='{}' and password='{}'".format(EmailID,Password))
         data = cur.fetchone()
         for i in data:
             EmployeeID = data[0]
             Name = data[1]
             title = data[2]
+            Admin_Access = data[3]
 
 
         #Admin's Tools
-        if EmployeeID == '001':
+        if Admin_Access == 'True':
             print('\nWelcome',Name,'!')
             cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'[Admin] Logged in',TimeStamp()))
             con.commit()
 
             while True:
-                menu1 = input('\n1.Add Employee\n2.Remove Employee\n3.Update Employee Details\n4.Employee Requests\n5.Employee Complaints\n6.Log Out\nOption: ')
+                menu1 = input('1.Add Employee\n2.Remove Employee\n3.Update Employee Details\n4.Employee Requests\n5.Employee Complaints\n6.Log Out\nOption: ')
                 if menu1 == '1':
                     AddEmployee()
 
                 elif menu1 == '6':
+                    cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'[Admin] Logged Out',TimeStamp()))
+                    con.commit()
                     break
-
-
 
 
         #Employee's Tools
@@ -114,6 +110,8 @@ while True:
             while True:
                 menu1 = input('\n1.Requests\n2.Log Out\nOption: ')
                 if menu1 == '2':
+                    cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,Name,'Logged Out',TimeStamp()))
+                    con.commit()
                     break
 
 
