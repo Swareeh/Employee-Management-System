@@ -32,7 +32,7 @@ def setup():
         Adm_EID = '001'
         Adm_name = input('Enter name of Admin: ')
         Adm_dob = input('Enter Date of Birth of Admin(yyyy-mm-dd): ')
-        Adm_emailID = input('Enter Email ID of Admin: ')
+        Adm_emailID = input('Enter Email ID of Admin: ').lower()
         Adm_phoneNo = input('Enter Phone Number of Admin: ')
         Adm_Title = input('Enter Admin Job Title: ')
         Adm_martialStatus = input('Enter Marital Status of Admin: ')
@@ -48,4 +48,53 @@ def setup():
 
 setup()
 
-print('Welcome To employee managemnet system')
+print('WELCOME TO EMP')
+
+while True:
+    menu = input('\n1.Login\n2.Exit\nOption: ')
+
+    if menu == '1':
+
+
+        EmailID = input('Enter Email ID: ').lower()
+        Password = input('Enter Password: ')
+
+        cur.execute("SELECT EmployeeID,Name,Job_Title from employees where EmailID='{}' and password='{}'".format(EmailID,Password))
+        data = cur.fetchone()
+        for i in data:
+            EmployeeID = data[0]
+            EmployeeName = data[1]
+            title = data[2]
+
+
+        #Admin Controls
+        if EmployeeID == '001':
+            print('\nWelcome',EmployeeName,'!')
+            cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,EmployeeName,'[Admin] Logged in',TimeStamp()))
+            con.commit()
+
+            while True:
+                menu1 = input('\n1.Requests\n2.Log Out\nOption: ')
+                if menu1 == '2':
+                    break
+
+
+
+        #Employee Controls
+        elif EmployeeID != '001':
+            print('\nWelcome',EmployeeName,'!')
+            cur.execute("INSERT into logs values('{}','{}','{}','{}')".format(EmployeeID,EmployeeName,'Logged in',TimeStamp()))
+            con.commit()
+
+            while True:
+                menu1 = input('\n1.Requests\n2.Log Out\nOption: ')
+                if menu1 == '2':
+                    break
+
+
+
+
+
+
+    elif menu == '2':
+        break
