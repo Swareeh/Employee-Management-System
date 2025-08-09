@@ -1,6 +1,8 @@
 #Connecting to MYSQL
 import mysql.connector as ms
 
+from tabulate import tabulate
+
 con = ms.connect(user='root',host='localhost',passwd='1234')
 cur = con.cursor()
 
@@ -10,31 +12,52 @@ def TimeStamp():
     currentTime = datetime.datetime.now()
     return currentTime
 
-# TODO: Generate a new employee ID [THIS IS NOW INDEPENDENT]
+#Generate a new employee ID
 def GenEmployeeID():
-    return '001'
+    cur.execute('SELECT EmployeeID from employees')
+    data = cur.fetchall()
+    lastID = data[0][-1]
+    newID = str(int(lastID)+1)
+    #Making sure the ID is min 3 Digits (Code will fail if ID exceeds 4 digts)
+    while len(newID)<3:
+        newID = '0' +newID
+    return newID
 
-#TODO: def Authentication():
-
+#TODO: def Authenticate(): [Shift some info from employee table to a new Auth Table]
 
 # Adding Employees to the Employee Table
 def AddEmployee(AuthBY,Admin_Access='False'):
-        EmployeeID = GenEmployeeID()
-        Name = input('Enter name of Employee: ')
-        DOB = input('Enter Date of Birth of Employee(yyyy-mm-dd): ')
-        EmailID = input('Enter Email ID of Employee: ').lower()
-        PhoneNo = input('Enter Phone Number of Employee: ')
-        Designation = input('Enter Employee Job Title: ')
-        MartialStatus = input('Enter Marital Status of Employee: ')
-        Children = int(input('Enter no. of children of Employee: '))
-        Salary = int(input('Enter Salary of Employee: '))
-        Qualification = input('Enter Qualification of Employee: ')
-        Password = input('Create a password: ')
+    EmployeeID = GenEmployeeID()
+    Name = input('Enter name of Employee: ')
+    DOB = input('Enter Date of Birth of Employee(yyyy-mm-dd): ')
+    EmailID = input('Enter Email ID of Employee: ').lower()
+    PhoneNo = input('Enter Phone Number of Employee: ')
+    Designation = input('Enter Employee Job Title: ')
+    MartialStatus = input('Enter Marital Status of Employee: ')
+    Children = int(input('Enter no. of children of Employee: '))
+    Salary = int(input('Enter Salary of Employee: '))
+    Qualification = input('Enter Qualification of Employee: ')
+    Password = input('Create a password: ')
 
-        cur.execute("INSERT into employees values('{}','{}','{}','{}',{},'{}','{}','{}','{}',{},'{}','{}','{}')".format(EmployeeID,Name,Designation,Admin_Access,Salary,EmailID,PhoneNo,DOB,MartialStatus,Children,Qualification,'Employed',Password))
-        cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(EmployeeID,Name,'New Employee Registered',AuthBY,TimeStamp()))
-        con.commit()
-        print('Your Employee ID:',EmployeeID)
+    cur.execute("INSERT into employees values('{}','{}','{}','{}',{},'{}','{}','{}','{}',{},'{}','{}','{}')".format(EmployeeID,Name,Designation,Admin_Access,Salary,EmailID,PhoneNo,DOB,MartialStatus,Children,Qualification,'Employed',Password))
+    cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(EmployeeID,Name,'New Employee Registered',AuthBY,TimeStamp()))
+    con.commit()
+    print('Your Employee ID:',EmployeeID)
+
+def RemoveEmployee(AuthBY):
+    Rm_EmployeeID = input('Enter EmployeeID(Removal): ')
+    cur.execute("SELECT * from employees where EmployeeID='{}'".format(Rm_EmployeeID))
+    data = cur.fetchone()
+    Rm_Name = data[1]
+
+    cur.execute("DELETE from employees where EmployeeID='{}'".format(Rm_EmployeeID))
+    cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(Rm_EmployeeID,Rm_Name,'Employee Terminated',AuthBY,TimeStamp()))
+    con.commit()
+    #TODO: ask for confirmation
+    print(Rm_Name,'has been Terminated!')
+
+# TODO: def SearchEmployee(AuthBY):
+
 
 #First Run Esstentials
 def setup():
@@ -50,7 +73,6 @@ def setup():
 
     cur.execute('SELECT Admin_Access FROM EMPLOYEES')
     data = cur.fetchall()
-
     #Checking if an Admin Exists
     AdminExists = False
     for i in data:
@@ -73,7 +95,6 @@ while True:
 
     if menu == '1':
 
-
         EmailID = input('Enter Email ID: ').lower()
         Password = input('Enter Password: ')
 
@@ -93,7 +114,7 @@ while True:
             con.commit()
 
             while True:
-                menu_admin = input('\n1.Add Employee\n2.Remove Employee\n3.Update Employee Details\n4.Employee Requests\n5.Employee Complaints\n6.Log Out\nOption: ')
+                menu_admin = input('\n1.Add Employee\n2.Remove Employee\n3.Search Employee Detials\n4.Update Employee Details\n5.Employee Requests\n6.Employee Complaints\n7.Log Out\nOption: ')
                 #Allowing admin to add employees
                 if menu_admin == '1':
                     while True:
@@ -108,25 +129,33 @@ while True:
                             print('New Employee Registered!')
                             break
 
-                #Allowing admin to remove employees
                 elif menu_admin == '2':
-                    Rm_EmployeeID = input('Enter EmployeeID(Removal): ')
-                    cur.execute("SELECT * from employees where EmployeeID='{}'".format(Rm_EmployeeID))
-                    data = cur.fetchone()
-                    Rm_Name = data[1]
+                    RemoveEmployee(LoggedInName)
 
-                    cur.execute("DELETE from employees where EmployeeID='{}'".format(Rm_EmployeeID))
-                    cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(Rm_EmployeeID,Rm_Name,'Employee Terminated',LoggedInName,TimeStamp()))
-                    con.commit()
-                    #TODO: ask for confirmation
-                    print(Rm_Name,'has been Terminated!')
-
-                #TODO: Allowing admin to update employee details
+                #Allowing admin to search for employees
                 elif menu_admin == '3':
-                    print('INDEV')
-                    
+                    Srch_EmailID = input('Enter Employee EmailID: ')
+                    cur.execute("SELECT * FROM Employees where EmailID='{}'".format(Srch_EmailID))
+                    data = cur.fetchall()
 
-                elif menu_admin == '6':
+                    if data == []:
+                        print('No Data Found!')
+                        break
+                    print(data)
+
+                    columns = ['EmployeeID','Name','Job Title','Admin Access','Salary','Email ID','Phone Number','Date of Birth','Marital Status','Children','Qualification','Employment Status','Password']
+                    print(tabulate(data,headers=columns, tablefmt='grid'))
+
+                    cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(data[0][0],data[0][1],'Employee Searched',LoggedInName,TimeStamp()))
+                    con.commit()
+
+                #TODO: Update Employees Details
+                elif menu_admin == '4':
+                    Updt_EmployeeID = input('Enter Employee ID: ')
+                    menu_admin3 = input('What would you like to update?:\n1.Name\n2.Job Title\n3.Admin Access\n4.Salary\n5.EmailID\n6.Phone Number\n7.Date of Birth\n8.Maritial Status\n9.Children\n10.Qualification')
+
+
+                elif menu_admin == '7':
                     cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(EmployeeID,LoggedInName,'[Admin] Logged Out','SYSTEM',TimeStamp()))
                     con.commit()
                     break
@@ -139,8 +168,8 @@ while True:
             con.commit()
 
             while True:
-                menu1 = input('\n1.Requests\n2.Log Out\nOption: ')
-                if menu1 == '2':
+                menu1 = input('\n1.Requests\n2.Reset Password\n3.Log Out\nOption: ')
+                if menu1 == '3':
                     cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(EmployeeID,LoggedInName,'Logged Out','SYSTEM',TimeStamp()))
                     con.commit()
                     break
