@@ -74,7 +74,7 @@ def setup():
     #Creating table to log all events 
     cur.execute('CREATE table if not exists logs(EmployeeID varchar(10),Name varchar(30),Action varchar(50),Authorized_BY varchar(100),TimeStamp varchar(30))')
     #Creating a table to store requests from employees
-    cur.execute('CREATE table if not exists requests(EmployeeID varchar(10),Name varchar(30),Requests varchar(300),Status varchar(30),TimeStamp varchar(30))')
+    cur.execute('CREATE table if not exists requests(EmployeeID varchar(10),Name varchar(30),Request varchar(300),Status varchar(30),Authorized_BY varchar(100),TimeStamp varchar(30))')
 
     cur.execute('SELECT Admin_Access FROM Credentials')
     data = cur.fetchall()
@@ -155,6 +155,7 @@ while True:
 
                 #TODO: Update Employees Details [add password reset feature]
                 elif menu_admin == '4':
+
                     print('Under Dev')
                     # Updt_EmployeeID = input('Enter Employee ID: ')
                     # cur.execute("SELECT name from credentials where EmployeeID='{}'".format(Updt_EmployeeID))
@@ -181,8 +182,13 @@ while True:
                     # else:
                     #     updt_value = input('Enter new value: ')
 
+
                 elif menu_admin == '5':
-                    print('Under dev')
+                    cur.execute('SELECT * from requests')
+                    data = cur.fetchall()
+                    columns = ['EmployeeID','Name','Request','Status','Authorized BY','Time']
+                    print(tabulate(data,headers=columns, tablefmt='grid'))
+                    
 
                 elif menu_admin == '6':
                     cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(LoggedInEmployeeID,LoggedInName,'[Admin] Logged Out','SYSTEM',TimeStamp()))
@@ -198,7 +204,12 @@ while True:
             while True:
                 menu1 = input('\n1.Requests & Complains\n2.Reset Password\n3.Log Out\nOption: ')
                 if menu1 == '1':
-                    print('Under dev')
+                    request = input('Enter your request: ') 
+                    cur.execute("INSERT into requests values('{}','{}','{}','Pending','','{}')".format(LoggedInEmployeeID,LoggedInName,request,TimeStamp()))
+                    cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(LoggedInEmployeeID,LoggedInName,'Submitted a Request',LoggedInName,TimeStamp()))
+                    con.commit()
+                    print('Request Submitted!')
+
 
                 elif menu1 == '2':
                     #TODO: Add Password Confirmation
