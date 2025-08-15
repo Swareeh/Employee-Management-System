@@ -25,7 +25,20 @@ def GenEmployeeID():
         newID = '0' +newID
     return newID
 
-#TODO: def Authenticate(): [Shift some info from employee table to a new Auth Table]
+def Authenticate():
+    EmailID = input('Enter Email ID: ').lower()
+    Password = input('Enter Password: ')
+
+    cur.execute("SELECT EmployeeID,Name,Admin_Access from credentials where EmailID='{}' and password='{}'".format(EmailID,Password))
+    data = cur.fetchone()
+    if data == None:
+        print('Invalid Credentials!')
+        return
+    return data[0],data[1],data[2]
+
+
+
+# FEATURES---------------------------------------------------------------------------------
 
 # Adding Employees to the Employee Table
 def AddEmployee(AuthBY,Admin_Access='False'):
@@ -54,12 +67,16 @@ def RemoveEmployee(AuthBY):
     Rm_Name = data[1]
 
     cur.execute("DELETE from employees where EmployeeID='{}'".format(Rm_EmployeeID))
+    cur.execute("DELETE from credentials where EmployeeID='{}'".format(Rm_EmployeeID))
     cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(Rm_EmployeeID,Rm_Name,'Employee Terminated',AuthBY,TimeStamp()))
     con.commit()
     #TODO: ask for confirmation
     print(Rm_Name,'has been Terminated!')
 
 # TODO: def SearchEmployee(AuthBY):
+
+
+
 
 
 #First Run Esstentials
@@ -100,16 +117,7 @@ while True:
 
     if menu == '1':
 
-        EmailID = input('Enter Email ID: ').lower()
-        Password = input('Enter Password: ')
-
-        cur.execute("SELECT EmployeeID,Name,Admin_Access from credentials where EmailID='{}' and password='{}'".format(EmailID,Password))
-        data = cur.fetchone()
-        for i in data:
-            LoggedInEmployeeID = data[0]
-            LoggedInName = data[1]
-            LoggedInAdmin_Access = data[2]
-
+        LoggedInEmployeeID,LoggedInName,LoggedInAdmin_Access = Authenticate()
 
         #Admin's Tools
         if LoggedInAdmin_Access == 'True':
@@ -155,32 +163,35 @@ while True:
 
                 #TODO: Update Employees Details [add password reset feature]
                 elif menu_admin == '4':
+                    Updt_EmployeeID = input('Enter Employee ID: ')
+                    cur.execute("SELECT name from credentials where EmployeeID='{}'".format(Updt_EmployeeID))
+                    data = cur.fetchone()
+                    Updt_EmployeeName = data[0]
+                    updt_menu = input('\nWhat would you like to update?:\n1.Name\n2.Job_Title\n3.Admin_Access\n4.Salary\n5.EmailID\n6.Phone_Number\n7.Date_of_Birth\n8.Maritial_Status\n9.Children\n10.Qualification\nType Option: ')
 
-                    print('Under Dev')
-                    # Updt_EmployeeID = input('Enter Employee ID: ')
-                    # cur.execute("SELECT name from credentials where EmployeeID='{}'".format(Updt_EmployeeID))
-                    # data = cur.fetchone()
-                    # Updt_EmployeeName = data[0]
-                    # updt_menu = input('What would you like to update?:\n1.Name\n2.Job_Title\n3.Admin_Access\n4.Salary\n5.EmailID\n6.Phone_Number\n7.Date_of_Birth\n8.Maritial_Status\n9.Children\n10.Qualification')
-
-                    # if updt_menu == 'Admin_Access':
-
-                    #     updt_menu2 = input('Input New Data(True\False): ')
-                    #     cur.execute("UPDATE credentials set Admin_Access='{}' where EmployeeID='{}'".format(updt_menu2,Updt_EmployeeID))
-                    #     cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(Updt_EmployeeID,Updt_EmployeeName,'Employee details Updated',LoggedInName,TimeStamp()))
-                    #     con.commit()
-
-                    # elif updt_menu == 'Salary':
-                    #     updt_salary = int(input('Enter new salary amt: '))
-
-                    # elif updt_menu == 'Children':
-                    #     updt_childern = int(input('Enter new children count: '))
-
-                    # elif updt_menu == 'Date_of_Birth':
-                    #     updt_date = input('Enter new DOB(yyyy-mm-dd): ')
+                    if updt_menu == 'Admin_Access':
+                        updt_adminAccess = input('Input New Data(True/False): ')
+                        cur.execute("UPDATE credentials set Admin_Access='{}' where EmployeeID='{}'".format(updt_adminAccess,Updt_EmployeeID))
+                        cur.execute("INSERT into logs values('{}','{}','{}','{}','{}')".format(Updt_EmployeeID,Updt_EmployeeName,'Employee Admin Access Updated',LoggedInName,TimeStamp()))
+                        con.commit()
+                        print('Admin Access Updated')
                     
-                    # else:
-                    #     updt_value = input('Enter new value: ')
+                    elif updt_menu == 'Salary':
+                        updt_salary = int(input('Enter new salary amt: '))
+                        cur.execute("UPDATE employees set Salary='{}' where EmployeeID='{}'".format(updt_salary,Updt_EmployeeID))
+
+
+                    elif updt_menu == 'Children':
+                        updt_childern = int(input('Enter new children count: '))
+
+                    elif updt_menu == 'Date_of_Birth':
+                        updt_date = input('Enter new DOB(yyyy-mm-dd): ')
+                    
+                    else:
+                        updt_value = input('Enter new value: ')
+                        cur.execute("UPDATE employees set {}='{}' where EmployeeID='{}'".format(updt_menu,updt_value,Updt_EmployeeID))
+                        print('Employee',updt_menu,'Updated')
+
 
 
                 elif menu_admin == '5':
@@ -188,6 +199,7 @@ while True:
                     data = cur.fetchall()
                     columns = ['EmployeeID','Name','Request','Status','Authorized BY','Time']
                     print(tabulate(data,headers=columns, tablefmt='grid'))
+                    # TODO: ADD Approval\Reject features
                     
 
                 elif menu_admin == '6':
